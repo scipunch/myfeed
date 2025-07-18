@@ -1,0 +1,9 @@
+install:
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+
+vet: fmt
+	go vet ./...
+	staticcheck ./...
+
+fmt:
+	go fmt ./...
