@@ -9,3 +9,7 @@ Configuration is made via TOML file where resources and corresponding parsers co
 - [ ] Web page via [readability](https://github.com/mozilla/readability)
 - [ ] Telegram channel via MTProto API
 - [ ] Torrent files (PDF, CBR)
+
+## Used resources
+
+- [PDF from HTML](https://www.reddit.com/r/webdev/comments/1gztdzm/building_a_pdf_with_html_crazy/)
