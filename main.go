@@ -67,7 +67,7 @@ func main() {
 		log.Fatalf("failed to initialize database schema with %v", err)
 	}
 
-	// TODO: Fetch configured RSS feeds
+	// Fetch configured RSS feeds
 	var errs []error
 	feeds := make([]*gofeed.Feed, len(conf.Resources))
 	fp := gofeed.NewParser()
