@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 
+	"github.com/mackee/go-readability"
 	"github.com/playwright-community/playwright-go"
 
 	"github.com/scipunch/myfeed/parser"
@@ -57,11 +58,22 @@ func (p Parser) Parse(uri string) (parser.Response, error) {
 	if _, err = page.Goto(uri); err != nil {
 		return resp, fmt.Errorf("could not goto: %w", err)
 	}
-	html, err := page.Content()
+	rawHtml, err := page.Content()
 	if err != nil {
 		return resp, fmt.Errorf("could not read page's content with %w", err)
 	}
+	resp.HTML = rawHtml
 
-	resp.HTML = html
+	options := readability.DefaultOptions()
+	article, err := readability.Extract(string(rawHtml), options)
+	if err != nil {
+		return resp, fmt.Errorf("failed to use readability with %w", err)
+	}
+
+	if article.Root == nil {
+		return resp, fmt.Errorf("readability returned empty article")
+	}
+
+	resp.HTML = readability.ToHTML(article.Root)
 	return resp, nil
 }
