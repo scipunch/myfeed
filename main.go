@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -31,7 +32,11 @@ func main() {
 	flag.Parse()
 
 	conf, err := config.Read(cfgPath)
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) && cfgPath == config.DefaultPath() {
+		if err := config.Write(cfgPath, conf); err != nil {
+			log.Fatalf("failed to write default config with %s", err)
+		}
+	} else if err != nil {
 		log.Fatalf("failed to read config with %s", err)
 	}
 

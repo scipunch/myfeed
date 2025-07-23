@@ -31,18 +31,33 @@ var (
 
 func Read(path string) (Config, error) {
 	conf := Default()
-	if path != DefaultPath() {
-		dat, err := os.ReadFile(path)
-		if err != nil {
-			return conf, fmt.Errorf("failed to find config file at %s with %w", path, err)
-		}
-		_, err = toml.Decode(string(dat), &conf)
-		if err != nil {
-			return conf, fmt.Errorf("failed to decode config at %s with %w", path, err)
-		}
-		slog.Debug("initialization finished", "configured resources", len(conf.Resources))
+	dat, err := os.ReadFile(path)
+	if err != nil {
+		return conf, err
+	}
+	_, err = toml.Decode(string(dat), &conf)
+	if err != nil {
+		return conf, fmt.Errorf("failed to decode config at %s with %w", path, err)
 	}
 	return conf, nil
+}
+
+func Write(cfgPath string, cfg Config) error {
+	blob, err := toml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to encode config with %w", err)
+	}
+	basePath := path.Dir(cfgPath)
+	err = os.MkdirAll(basePath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create base config directory at '%s' with %w", basePath, err)
+	}
+	err = os.WriteFile(cfgPath, blob, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write into config file at '%s' with %w", cfgPath, err)
+	}
+	slog.Info("config written", "at", cfgPath)
+	return nil
 }
 
 func Default() Config {
@@ -60,7 +75,7 @@ func DefaultPath() string {
 
 	var home = os.Getenv("HOME")
 	if home != "" {
-		return path.Join(xdgHome, ".config", baseCfgPath)
+		return path.Join(home, ".config", baseCfgPath)
 	}
 
 	panic("unclear where to search for the config fie")
