@@ -56,22 +56,22 @@ func (p Parser) Parse(uri string) (parser.Response, error) {
 	}
 	defer page.Close()
 	if _, err = page.Goto(uri); err != nil {
-		return resp, fmt.Errorf("could not goto: %w", err)
+		return resp, fmt.Errorf("could not go to '%s': %w", uri, err)
 	}
 	rawHtml, err := page.Content()
 	if err != nil {
-		return resp, fmt.Errorf("could not read page's content with %w", err)
+		return resp, fmt.Errorf("could not read page content at '%s': %w", uri, err)
 	}
 	resp.HTML = rawHtml
 
 	options := readability.DefaultOptions()
 	article, err := readability.Extract(string(rawHtml), options)
 	if err != nil {
-		return resp, fmt.Errorf("failed to use readability with %w", err)
+		return resp, fmt.Errorf("could not use readability for '%s': %w", uri, err)
 	}
 
 	if article.Root == nil {
-		return resp, fmt.Errorf("readability returned empty article")
+		return resp, fmt.Errorf("readability returned empty article for '%s'", uri)
 	}
 
 	resp.HTML = readability.ToHTML(article.Root)
