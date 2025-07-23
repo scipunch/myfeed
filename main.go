@@ -31,6 +31,7 @@ func main() {
 	flag.StringVar(&cfgPath, "config", config.DefaultPath(), "path to a TOML config")
 	flag.Parse()
 
+	// Read config and create if default is missing
 	conf, err := config.Read(cfgPath)
 	if errors.Is(err, os.ErrNotExist) && cfgPath == config.DefaultPath() {
 		if err := config.Write(cfgPath, conf); err != nil {
@@ -40,6 +41,7 @@ func main() {
 		log.Fatalf("failed to read config with %s", err)
 	}
 
+	// Connect to database & initialize schema
 	dbBasePath := path.Dir(conf.DatabasePath)
 	err = os.MkdirAll(dbBasePath, os.ModePerm)
 	if err != nil {
@@ -53,6 +55,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize database schema with %v", err)
 	}
+
+	// TODO: Fetch configured RSS feeds
+	// TODO: Process new items
+	// TODO: Generate PDF report
 }
 
 func initDB(ctx context.Context, source string) (*sql.DB, error) {
