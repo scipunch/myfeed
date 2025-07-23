@@ -14,6 +14,7 @@ import (
 	"path"
 	"syscall"
 
+	"github.com/mmcdole/gofeed"
 	_ "modernc.org/sqlite"
 
 	"github.com/scipunch/myfeed/config"
@@ -57,6 +58,22 @@ func main() {
 	}
 
 	// TODO: Fetch configured RSS feeds
+	var errs []error
+	feeds := make([]*gofeed.Feed, len(conf.Resources))
+	fp := gofeed.NewParser()
+	for i, resource := range conf.Resources {
+		feed, err := fp.ParseURL(resource.FeedURL)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("'%s' parse failed with %w", resource.FeedURL, err))
+			continue
+		}
+		feeds[i] = feed
+	}
+	if len(errs) > 0 {
+		slog.Error("several feeds were not parsed", "feeds", errors.Join(errs...))
+	}
+	slog.Info("fetched feeds", "amount", len(feeds))
+
 	// TODO: Process new items
 	// TODO: Generate PDF report
 }
