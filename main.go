@@ -18,6 +18,8 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/scipunch/myfeed/config"
+	"github.com/scipunch/myfeed/parser"
+	"github.com/scipunch/myfeed/parser/factory"
 )
 
 //go:embed schema.sql
@@ -40,6 +42,14 @@ func main() {
 		}
 	} else if err != nil {
 		log.Fatalf("failed to read config with %s", err)
+	}
+	var parserTypes []parser.Type
+	for _, r := range conf.Resources {
+		parserTypes = append(parserTypes, r.ParserT)
+	}
+	parsers, err := factory.Init(parserTypes)
+	if err != nil {
+		log.Fatalf("failed to initialize some parsers with %s", err)
 	}
 
 	// Connect to database & initialize schema
@@ -72,9 +82,30 @@ func main() {
 	if len(errs) > 0 {
 		slog.Error("several feeds were not parsed", "feeds", errors.Join(errs...))
 	}
-	slog.Info("fetched feeds", "amount", len(feeds))
 
-	// TODO: Process new items
+	// Process new items
+	errs = nil
+	slog.Info("fetched feeds", "amount", len(feeds))
+	for i, feed := range feeds {
+		if feed == nil {
+			slog.Debug("skipping failed to parse feed")
+			continue
+		}
+		resource := conf.Resources[i]
+		parser := parsers[resource.ParserT]
+		for _, item := range feed.Items {
+			data, err := parser.Parse(item.Link)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			slog.Info("feed item parsed", "length", len(data.String()))
+		}
+	}
+	if len(errs) > 0 {
+		slog.Error("failed to parse some pages", "errors", errors.Join(errs...).Error())
+	}
+
 	// TODO: Generate PDF report
 }
 

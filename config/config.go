@@ -7,6 +7,8 @@ import (
 	"path"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/scipunch/myfeed/parser"
 )
 
 const baseCfgPath = "myfeed/config.toml"
@@ -17,17 +19,9 @@ type Config struct {
 }
 
 type ResourceConfig struct {
-	FeedURL string `toml:"feed_url"`
-	ParserT string `toml:"parser"`
+	FeedURL string      `toml:"feed_url"`
+	ParserT parser.Type `toml:"parser"`
 }
-
-type ParserT = string
-
-var (
-	WebParserT      = ParserT("web")
-	TelegramParserT = ParserT("telegram")
-	TorrentParserT  = ParserT("torrent")
-)
 
 func Read(path string) (Config, error) {
 	conf := Default()
