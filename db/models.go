@@ -4,18 +4,8 @@
 
 package db
 
-import (
-	"database/sql"
-)
-
 type Feed struct {
-	Title string
-	Url   string
-}
-
-type FeedItem struct {
-	FeedTitle   string
-	Guid        string
-	PubDate     int64
-	ProcessedAt sql.NullInt64
+	Title    string
+	Url      string
+	LastGuid string
 }

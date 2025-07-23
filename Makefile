@@ -11,3 +11,6 @@ vet: fmt
 fmt:
 	go fmt ./...
 	sleek *.sql
+
+sqlc: fmt
+	sqlc generate

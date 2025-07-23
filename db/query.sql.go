@@ -7,42 +7,22 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const saveFeed = `-- name: SaveFeed :exec
-insert into feed (title, url)
-values (?, ?)
+INSERT INTO
+    feed (title, url, last_guid)
+VALUES
+    (?, ?, ?)
 `
 
 type SaveFeedParams struct {
-	Title string
-	Url   string
+	Title    string
+	Url      string
+	LastGuid string
 }
 
 func (q *Queries) SaveFeed(ctx context.Context, arg SaveFeedParams) error {
-	_, err := q.db.ExecContext(ctx, saveFeed, arg.Title, arg.Url)
-	return err
-}
-
-const saveFeedItem = `-- name: SaveFeedItem :exec
-insert into feed_item (feed_title, guid, pub_date, processed_at)
-values (?, ?, ?, ?)
-`
-
-type SaveFeedItemParams struct {
-	FeedTitle   string
-	Guid        string
-	PubDate     int64
-	ProcessedAt sql.NullInt64
-}
-
-func (q *Queries) SaveFeedItem(ctx context.Context, arg SaveFeedItemParams) error {
-	_, err := q.db.ExecContext(ctx, saveFeedItem,
-		arg.FeedTitle,
-		arg.Guid,
-		arg.PubDate,
-		arg.ProcessedAt,
-	)
+	_, err := q.db.ExecContext(ctx, saveFeed, arg.Title, arg.Url, arg.LastGuid)
 	return err
 }
