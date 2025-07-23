@@ -64,6 +64,7 @@ func Default() Config {
 	var dbBase = path.Join(os.Getenv("HOME"), ".local/share/myfeed")
 	return Config{
 		DatabasePath: path.Join(dbBase, "data.db"),
+		Resources:    []ResourceConfig{},
 	}
 }
 
