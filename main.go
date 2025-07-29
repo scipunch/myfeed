@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path"
 	"syscall"
+	"text/template"
 
 	"github.com/mmcdole/gofeed"
 	_ "modernc.org/sqlite"
@@ -25,7 +26,19 @@ import (
 //go:embed schema.sql
 var ddl string
 
+type Newsletter struct {
+	Title string
+	Pages []Page
+}
+
+type Page struct {
+	Title   string
+	Content string
+}
+
 func main() {
+	t := template.Must(template.ParseGlob("templates/*.html"))
+
 	if os.Getenv("DEBUG") != "" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
 	}
@@ -79,13 +92,14 @@ func main() {
 		}
 		feeds[i] = feed
 	}
+	slog.Info("fetched feeds", "amount", len(feeds))
 	if len(errs) > 0 {
 		slog.Error("several feeds were not parsed", "feeds", errors.Join(errs...))
 	}
 
 	// Process new items
 	errs = nil
-	slog.Info("fetched feeds", "amount", len(feeds))
+	newsletter := Newsletter{Title: "Test newsletter", Pages: nil}
 	for i, feed := range feeds {
 		if feed == nil {
 			slog.Debug("skipping failed to parse feed")
@@ -100,13 +114,27 @@ func main() {
 				continue
 			}
 			slog.Info("feed item parsed", "length", len(data.String()))
+			newsletter.Pages = append(newsletter.Pages, Page{
+				Title:   item.Title,
+				Content: data.String(),
+			})
 		}
 	}
+	slog.Info("newsletter content fetched", "pages", len(newsletter.Pages))
 	if len(errs) > 0 {
 		slog.Error("failed to parse some pages", "errors", errors.Join(errs...).Error())
 	}
 
 	// TODO: Generate PDF report
+	out, err := os.Create("index.html")
+	if err != nil {
+		log.Fatal("could not create newsletter HTML file", err)
+	}
+	defer out.Close()
+	err = t.Execute(out, newsletter)
+	if err != nil {
+		log.Fatal("could not convert newsletter into HTML", err)
+	}
 }
 
 func initDB(ctx context.Context, source string) (*sql.DB, error) {
